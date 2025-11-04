@@ -8,7 +8,6 @@ import (
 	"os/exec"
 	"os/signal"
 	"syscall"
-	"testing"
 
 	"github.com/oklog/run"
 	"github.com/olebedev/emitter"
@@ -108,13 +107,8 @@ func (c *command) Run() error {
 		})
 	}
 
-	if isTty || testing.Testing() {
-		// input - forward stdin to PTY
-		// TTY mode: stdin is an active terminal, we need to forward user input to the PTY.
-		// Test mode: stdin is mocked by the test, we need to forward test data to the PTY.
-		// Both cases require the input actor to be coordinated with the run group.
-		// Non-TTY non-test mode: stdin is already closed (spawned from non-interactive env),
-		// so we skip it to avoid unnecessary operations.
+	if isTty {
+		// input
 		ctx, cancel := context.WithCancel(c.ctx)
 		g.Add(func() error {
 			_, err := io.Copy(c.ptmx, uio.NewContextReader(ctx, c.stdin))
